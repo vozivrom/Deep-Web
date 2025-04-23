@@ -1,7 +1,10 @@
 import pandas as pd
+from pandas import DataFrame
 import streamlit as st
+import numpy as np
+import requests
 
-from csv_adapter import CSVAdapter
+from features import *
 
 df = pd.read_csv('spotify_songs.csv')
 df['track_album_release_date'] = pd.to_datetime(df['track_album_release_date'])
@@ -9,9 +12,19 @@ df['track_album_release_date'] = pd.to_datetime(df['track_album_release_date'])
 st.set_page_config(layout="wide")
 header = st.markdown("<h1 style='text-align:center;'>Deep Web</h1>", unsafe_allow_html=True)
 
-k_max = st.slider('Kmax', step=1, max_value=len(df))
-k_max = st.number_input('Kmax', step=1, max_value=len(df), value=k_max)
+if 'counter' not in st.session_state:
+    st.session_state.counter = 0
 
+# st.write(st.session_state.counter)
+
+
+if "start" not in st.session_state:
+    st.session_state.start = False
+
+if 'k' not in st.session_state:
+    # st.session_state.k = df.shape[0]
+    st.session_state.k = np.full(9, df.shape[0])
+    st.session_state.k_max = 2
 
 st.markdown(
     """
@@ -24,69 +37,62 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-csv_adapter = CSVAdapter(df)
+st.session_state.filtered_df = df
+df_adapter = DFAdapter(st.session_state.filtered_df)
 
-genres, date = st.columns([4,2], border=True)
+default_feature_params = {'st': st, 'df_adapter': df_adapter}
 
-with genres:
-        st.markdown('<div class="param_header">Playlist genre</div>', unsafe_allow_html=True)
+features = {'track_album_release_date': TrackAlbumReleaseDate(**{**default_feature_params, 'feature_name': 'track_album_release_date'}),
+            'playlist_genre': PlaylistGenre(**{**default_feature_params, 'feature_name': 'playlist_genre'}),
+            'playlist_subgenre': Feature(**{**default_feature_params, 'feature_name': 'playlist_subgenre'}),
+            'track_popularity': SliderFeature(**{**default_feature_params, 'feature_name': 'track_popularity'}),
+            'duration_in_minutes': SliderFeature(**{**default_feature_params, 'feature_name': 'duration_in_minutes'}),
+            'loudness': Loudness(**{**default_feature_params, 'feature_name': 'loudness'}),
+            'track_artist': StringFeature(**{**default_feature_params, 'feature_name': 'track_artist'}),
+            'track_album_name': StringFeature(**{**default_feature_params, 'feature_name': 'track_album_name'}),
+            'track_name': StringFeature(**{**default_feature_params, 'feature_name': 'track_name'})}
 
-        genres_choice = st.multiselect(
-            label='',
-            options=csv_adapter.get_genres(),
-            default=[]
-        )
+k_max_columns = st.columns([1,1,0.25])
+with k_max_columns[0]:
+    st.session_state.k_max = st.slider('Kmax', disabled=st.session_state.start, step=1, min_value=2, max_value=len(df), value=2)
+with k_max_columns[1]:
+    st.session_state.k_max = st.number_input('Kmax', step=1, disabled=st.session_state.start, min_value=2, max_value=len(df), value=st.session_state.k_max)
+with k_max_columns[2]:
+    if st.button('Start', type='primary'):
+        st.session_state.start = True
 
-        if genres_choice:
+    if st.button('Reset'):
+        for key in st.session_state.keys():
+            del st.session_state[key]
+        st.rerun()
 
-            filtered_df = df[df['playlist_genre'].isin(genres_choice)]
-            k = len(filtered_df)
-            st.write(f'k = {k}')
+st.header('Choose features to use:')
+features_columns = st.columns(3)
 
-            if k <= k_max:
-                st.write(filtered_df)
-            else:
-                sub_genres = st.columns(len(genres_choice), border=True)
-                for i, sub_genre in enumerate(sub_genres):
-                    with sub_genre:
-                        st.markdown('<div class="param_header">Playlist subgenre</div>', unsafe_allow_html=True)
+for i, feature in enumerate(df.columns):
+    with features_columns[i // 3]:
+        label = str(feature.replace('_', ' ')).capitalize()
+        checkbox = None
 
-                        sub_genres_choice = st.multiselect(
-                            label='',
-                            options=csv_adapter.get_subgenres(genres_choice[i]),
-                            default=[]
-                        )
+        if feature == 'playlist_subgenre':
+            checkbox = st.checkbox(label=label, value=features[feature].enabled, disabled=st.session_state.start, on_change=lambda: st.session_state.update({'playlist_genre': True}) if st.session_state.playlist_subgenre else None, key=feature)
+        elif feature == 'playlist_genre':
+            checkbox = st.checkbox(label=label, value=features[feature].enabled, disabled=st.session_state.start, on_change=lambda: st.session_state.update({'playlist_subgenre': False}) if not st.session_state.playlist_genre else None, key=feature)
+        else:
+            checkbox = st.checkbox(label=label, value=features[feature].enabled, disabled=st.session_state.start, key=feature)
 
-                        if sub_genres_choice:
-                            filtered_df = df[df['playlist_subgenre'].isin(sub_genres_choice)]
-                            k = len(filtered_df)
-                            st.write(f'k = {k}')
-                            if k <= k_max:
-                                st.write(filtered_df)
+        if checkbox:
+            features[feature].enabled = True
+            # st.session_state.k[i] = df.shape[0]
 
+if st.session_state.start:
+    for i, feature in enumerate(features.values()):
+        if feature.enabled and feature.feature_name != 'playlist_subgenre':
+            # st.write(f'i = {i}')
+            st.session_state.filtered_df, st.session_state.k[i] = feature.show_feature(st.session_state.filtered_df, st.session_state.k[i], st.session_state.k_max)
+            if st.session_state.k[i] < st.session_state.k_max:
+                st.session_state.k[i + 1:] = -1
+            # st.write(st.session_state.k)
 
-with date:
-    st.markdown('<div class="param_header">Track release date</div>', unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        from_date = pd.to_datetime(st.date_input(label='From date', value=None))
-
-    with col2:
-        to_date = pd.to_datetime(st.date_input(label='To date', value=None))
-
-    filtered_df = None
-    if from_date and not to_date:
-        filtered_df = df[df['track_album_release_date'] >= from_date]
-    elif not from_date and to_date:
-        filtered_df = df[df['track_album_release_date'] <= to_date]
-    elif from_date and to_date:
-        mask = (df['track_album_release_date'] >= from_date) & (df['track_album_release_date'] <= to_date)
-        filtered_df = df[mask]
-
-    if from_date or to_date:
-        k = len(filtered_df)
-        st.write(f'k = {k}')
-        if k <= k_max:
-            st.write(filtered_df)
+# st.write(f'k = {st.session_state.k}, k_max = {st.session_state.k_max}')
+st.session_state.counter += 1

@@ -16,8 +16,15 @@ df = pd.read_csv('spotify_songs.csv')
 #
 # df['track_album_release_date'] = df['track_album_release_date'].apply(convert_date)
 df['track_album_release_date'] = pd.to_datetime(df['track_album_release_date'])
-
-# df.drop('playlist_id', axis=1, inplace=True)
-# df.to_csv('spotify_songs.csv', index=False)
+df.drop(
+    labels=[
+        'danceability', 'energy', 'mode',
+        'speechiness', 'acousticness', 'instrumentalness',
+        'liveness', 'valence', 'tempo'
+    ],
+    axis=1,
+    inplace=True
+)
+df.to_csv('spotify_songs.csv', index=False)
 
 print(df.info())
