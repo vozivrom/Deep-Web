@@ -4,7 +4,7 @@ import streamlit as st
 import numpy as np
 import requests
 
-from app.domain import DataFrameRow
+from app.dataset_rebuild import features_params
 
 from features.track_album_release_date import TrackAlbumReleaseDate
 from features.playlist_genre import PlaylistGenre
@@ -17,9 +17,6 @@ df['track_album_release_date'] = pd.to_datetime(df['track_album_release_date'])
 
 st.set_page_config(layout="wide")
 header = st.markdown("<h1 style='text-align:center;'>Deep Web</h1>", unsafe_allow_html=True)
-
-if 'counter' not in st.session_state:
-    st.session_state.counter = 0
 
 if 'k' not in st.session_state:
     st.session_state.k = np.full(8, df.shape[0])
@@ -39,23 +36,27 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-default_feature_params = {'st': st}
+features_names = [feature_name for feature_name in [
+    'track_album_release_date', 'playlist_genre', 'track_popularity',
+    'duration_in_minutes', 'loudness', 'track_artist',
+    'track_album_name', 'track_name'
+] for _ in range(3)]
+features_names_iter = iter(features_names)
 
-features = {'track_album_release_date': TrackAlbumReleaseDate(**{**default_feature_params, 'feature_name': 'track_album_release_date'}),
-            'playlist_genre': PlaylistGenre(**{**default_feature_params, 'feature_name': 'playlist_genre'}),
-            'track_popularity': SliderFeature(**{**default_feature_params, 'feature_name': 'track_popularity'}),
-            'duration_in_minutes': SliderFeature(**{**default_feature_params, 'feature_name': 'duration_in_minutes'}),
-            'loudness': Loudness(**{**default_feature_params, 'feature_name': 'loudness'}),
-            'track_artist': StringFeature(**{**default_feature_params, 'feature_name': 'track_artist'}),
-            'track_album_name': StringFeature(**{**default_feature_params, 'feature_name': 'track_album_name'}),
-            'track_name': StringFeature(**{**default_feature_params, 'feature_name': 'track_name'})}
+features = {next(features_names_iter): TrackAlbumReleaseDate(st, next(features_names_iter), features_params[next(features_names_iter)]),
+            next(features_names_iter): PlaylistGenre(st, next(features_names_iter), features_params[next(features_names_iter)]),
+            next(features_names_iter): SliderFeature(st, next(features_names_iter), features_params[next(features_names_iter)]),
+            next(features_names_iter): SliderFeature(st, next(features_names_iter), features_params[next(features_names_iter)]),
+            next(features_names_iter): Loudness(st, next(features_names_iter), features_params[next(features_names_iter)]),
+            next(features_names_iter): StringFeature(st, next(features_names_iter), features_params[next(features_names_iter)]),
+            next(features_names_iter): StringFeature(st, next(features_names_iter), features_params[next(features_names_iter)]),
+            next(features_names_iter): StringFeature(st, next(features_names_iter), features_params[next(features_names_iter)])}
 
 k_max_columns = st.columns([1,1,0.25], vertical_alignment='bottom')
 with k_max_columns[0]:
-    st.session_state.k_max = st.slider('Kmax', step=1, min_value=2, max_value=len(df), value=2)
-    # requests.put("http://127.0.0.1:8000/k_max", json={'name': 'k_max', 'value': st.session_state.k_max})
+    st.session_state.k_max = st.slider('Kmax', step=1, min_value=2, max_value=len(df), value=features_params['k_max'])
 with k_max_columns[1]:
-    st.session_state.k_max = st.number_input('Kmax', step=1, min_value=2, max_value=len(df), value=st.session_state.k_max)
+    st.session_state.k_max = st.number_input('Kmax', step=1, min_value=2, max_value=len(df), value=features_params['k_max'])
     # requests.put("http://127.0.0.1:8000/k_max", json={'name': 'k_max', 'value': st.session_state.k_max})
 with k_max_columns[2]:
     if st.button('Reset'):

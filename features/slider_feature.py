@@ -20,7 +20,7 @@ class SliderFeature(Feature):
             label='',
             min_value=min_value,
             max_value=max_value,
-            value=(min_value, max_value),
+            value=self.value,
             step=0.25 if self.feature_name == 'duration_in_minutes' else 1
         )
         filtered_df = df[(df[self.feature_name] >= start) & (df[self.feature_name] <= end)]

@@ -9,7 +9,7 @@ class StringFeature(Feature):
 
         feature_name = str(self.feature_name.replace('_', ' ')).capitalize()
         self.st.markdown(f'<div class="param_header">{feature_name}</div>', unsafe_allow_html=True)
-        user_input = self.st.text_input('', key=self.feature_name)
+        user_input = self.st.text_input(label='', value=self.value, key=self.feature_name)
 
         filtered_df = df
         if user_input:

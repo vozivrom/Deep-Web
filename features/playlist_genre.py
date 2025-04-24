@@ -11,7 +11,7 @@ class PlaylistGenre(Feature):
         genres_choice = self.st.multiselect(
             label='',
             options=list(df['playlist_genre'].unique()),
-            default=[]
+            default=self.value
         )
         filtered_df = df
         if genres_choice:

@@ -18,7 +18,7 @@ class Loudness(Feature):
         normal_loud_threshold = chunks[2].iloc[-1]
 
         options = ['Quite', 'Normal', 'Loud']
-        choice = self.st.pills('', options, selection_mode="single")
+        choice = self.st.pills('', options, default=self.value, selection_mode="single")
 
         filtered_df, k = df_handler.get_loudness(choice, quiet_normal_threshold, normal_loud_threshold)
 
