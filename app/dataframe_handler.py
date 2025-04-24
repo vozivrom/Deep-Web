@@ -1,7 +1,8 @@
 import pandas as pd
 from pandas import DataFrame
+import requests
 
-class DFAdapter:
+class DFHandler:
     def __init__(self, df: DataFrame):
         self.df = df
 
@@ -9,7 +10,7 @@ class DFAdapter:
         return self.df[(self.df[feature_name] >= start) & (self.df[feature_name] <= end)]
 
     def get_original_df(self) -> DataFrame:
-        return pd.read_csv('spotify_songs.csv')
+        return pd.read_csv('data/spotify_songs.csv')
 
     def get_unique_values(self, feature_name: str) -> list:
         return list(self.df[feature_name].unique())
@@ -32,3 +33,25 @@ class DFAdapter:
         else:
             return self.df, self.df.shape[0]
         return filtered_df, len(filtered_df)
+
+    def get_loudness(self, choice: str, quiet_normal_threshold: int, normal_loud_threshold: int) -> (DataFrame, int):
+        filtered_df = self.df
+        if choice == 'Quite':
+            filtered_df = self.df[self.df['loudness'] <= quiet_normal_threshold]
+        elif choice == 'Normal':
+            filtered_df = self.df[(self.df['loudness'] >= quiet_normal_threshold) & (self.df['loudness'] <= normal_loud_threshold)]
+        elif choice == 'Loud':
+            filtered_df = self.df[self.df['loudness'] >= normal_loud_threshold]
+        k = len(filtered_df)
+
+        return filtered_df, k
+
+    def to_json(self) -> list[dict]:
+        df_json = self.df
+        df_json['track_album_release_date'] = df_json['track_album_release_date'].astype(str)
+        df_json = df_json.to_dict(orient="records")
+        return df_json
+
+    def put_df(self, feature_name: str):
+        df_json = self.to_json()
+        requests.put(f"http://127.0.0.1:8000/{feature_name}", json=df_json)
