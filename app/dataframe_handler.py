@@ -9,7 +9,8 @@ class DFHandler:
     def get_slider(self, start, end, feature_name) -> DataFrame:
         return self.df[(self.df[feature_name] >= start) & (self.df[feature_name] <= end)]
 
-    def get_original_df(self) -> DataFrame:
+    @classmethod
+    def get_original_df(cls) -> DataFrame:
         return pd.read_csv('data/spotify_songs.csv')
 
     def get_unique_values(self, feature_name: str) -> list:
@@ -36,18 +37,18 @@ class DFHandler:
 
     def get_loudness(self, choice: str, quiet_normal_threshold: int, normal_loud_threshold: int) -> (DataFrame, int):
         filtered_df = self.df
-        if choice == 'Quite':
-            filtered_df = self.df[self.df['loudness'] <= quiet_normal_threshold]
+        if choice == 'Quiet':
+            filtered_df = self.df[self.df['loudness'] < quiet_normal_threshold]
         elif choice == 'Normal':
             filtered_df = self.df[(self.df['loudness'] >= quiet_normal_threshold) & (self.df['loudness'] <= normal_loud_threshold)]
         elif choice == 'Loud':
-            filtered_df = self.df[self.df['loudness'] >= normal_loud_threshold]
+            filtered_df = self.df[self.df['loudness'] > normal_loud_threshold]
         k = len(filtered_df)
 
         return filtered_df, k
 
     def to_json(self) -> list[dict]:
-        df_json = self.df
+        df_json = self.df.copy()
         df_json['track_album_release_date'] = df_json['track_album_release_date'].astype(str)
         df_json = df_json.to_dict(orient="records")
         return df_json

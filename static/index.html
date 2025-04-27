@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Deep Web Music Search</title>
+</head>
+<body>
+
+<h1>🎵 Deep Web Music Search</h1>
+
+<form id="searchForm">
+  <h3>Track Release Date</h3>
+  From: <input type="date" id="fromDate">
+  To: <input type="date" id="toDate">
+
+  <h3>Playlist Genre</h3>
+  <select id="playlistGenre" multiple>
+    <option value="pop">Pop</option>
+    <option value="rock">Rock</option>
+    <option value="edm">EDM</option>
+    <option value="rap">Rap</option>
+    <option value="latin">Latin</option>
+    <option value="r&b">R&B</option>
+  </select>
+
+  <h3>Playlist Genre</h3>
+  <select id="playlistSubGenre" multiple>
+    <option value="dance pop">Dance Pop</option>
+    <option value="post-teen pop">Post-Teen Pop</option>
+    <option value="electropop">Electropop</option>
+    <option value="indie poptimism">Indie Poptimism</option>
+    <option value="hip hop">Hip Hop</option>
+    <option value="southern hip hop">Southern Hip Hop</option>
+    <option value="gangster rap">Gangster Rap</option>
+    <option value="trap">Trap</option>
+    <option value="album rock">Album Rock</option>
+    <option value="classic rock">Classic Rock</option>
+    <option value="permanent wave">Permanent Wave</option>
+    <option value="hard rock">Hard Rock</option>
+    <option value="tropical">Tropical</option>
+    <option value="latin pop">Latin Pop</option>
+    <option value="reggaeton">Reggaeton</option>
+    <option value="latin hip hop">Latin Hip Hop</option>
+    <option value="urban contemporary">Urban Contemporary</option>
+    <option value="hip pop">Hip Pop</option>
+    <option value="new jack swing">New Jack Swing</option>
+    <option value="neo soul">Neo Soul</option>
+    <option value="electro house">Electro House</option>
+    <option value="big room">Big Room</option>
+    <option value="pop edm">Pop EDM</option>
+    <option value="progressive electro house">Progressive Electro House</option>
+
+  </select>
+
+  <h3>Track Popularity</h3>
+  Min: <input type="number" id="trackPopularityMin" min="0" max="100" value="0">
+  Max: <input type="number" id="trackPopularityMax" min="0" max="100" value="100">
+
+  <h3>Duration in Minutes</h3>
+  Min: <input type="number" id="durationMin" min="0" step="0.1" value="0">
+  Max: <input type="number" id="durationMax" min="0" step="0.1" value="10">
+
+  <h3>Loudness</h3>
+  <select id="loudness">
+    <option value="">-- Select --</option>
+    <option value="Quiet">Quiet</option>
+    <option value="Normal">Normal</option>
+    <option value="Loud">Loud</option>
+  </select>
+
+  <h3>Track Artist</h3>
+  <input type="text" id="trackArtist">
+
+  <h3>Track Album Name</h3>
+  <input type="text" id="trackAlbumName">
+
+  <h3>Track Name</h3>
+  <input type="text" id="trackName">
+
+  <br><br>
+  <button type="submit">Search</button>
+</form>
+
+<hr>
+
+<h2>Results</h2>
+<div id="resultsCount"></div>
+<div id="resultsTable"></div>
+
+<script src="/static/script.js"></script>
+
+</body>
+</html>

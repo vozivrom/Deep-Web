@@ -8,10 +8,13 @@ class PlaylistGenre(Feature):
         # GENRES
 
         self.st.markdown('<div class="param_header">Playlist genres</div>', unsafe_allow_html=True)
+
+        orig_df = DFHandler.get_original_df()
         genres_choice = self.st.multiselect(
-            label='',
-            options=list(df['playlist_genre'].unique()),
-            default=self.value
+            label=self.feature_name,
+            options=list(orig_df['playlist_genre'].unique()),
+            default=self.value,
+            label_visibility = 'collapsed'
         )
         filtered_df = df
         if genres_choice:
@@ -30,9 +33,10 @@ class PlaylistGenre(Feature):
                 subgenres += list(filtered_df['playlist_subgenre'].unique())
 
             sub_genres_choice = self.st.multiselect(
-                label='',
+                label=self.feature_name,
                 options=subgenres,
-                default=[]
+                default=[],
+                label_visibility='collapsed'
             )
 
             if sub_genres_choice:

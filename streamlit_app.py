@@ -1,10 +1,13 @@
+import time
+
 import pandas as pd
 from pandas import DataFrame
 import streamlit as st
 import numpy as np
 import requests
+import json
 
-from app.dataset_rebuild import features_params
+from app.json_handler import JsonHandler
 
 from features.track_album_release_date import TrackAlbumReleaseDate
 from features.playlist_genre import PlaylistGenre
@@ -14,6 +17,8 @@ from features.loudness import Loudness
 
 df = pd.read_csv('data/spotify_songs.csv')
 df['track_album_release_date'] = pd.to_datetime(df['track_album_release_date'])
+
+json_handler = JsonHandler()
 
 st.set_page_config(layout="wide")
 header = st.markdown("<h1 style='text-align:center;'>Deep Web</h1>", unsafe_allow_html=True)
@@ -36,6 +41,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+with open('features_params.json', "r", encoding='utf-8') as file:
+    features_params = json.load(file)
+
 features_names = [feature_name for feature_name in [
     'track_album_release_date', 'playlist_genre', 'track_popularity',
     'duration_in_minutes', 'loudness', 'track_artist',
@@ -54,23 +62,16 @@ features = {next(features_names_iter): TrackAlbumReleaseDate(st, next(features_n
 
 k_max_columns = st.columns([1,1,0.25], vertical_alignment='bottom')
 with k_max_columns[0]:
-    st.session_state.k_max = st.slider('Kmax', step=1, min_value=2, max_value=len(df), value=features_params['k_max'])
+    st.session_state.k_max = st.slider('Kmax', step=1, min_value=2, max_value=len(df), value=50)
 with k_max_columns[1]:
-    st.session_state.k_max = st.number_input('Kmax', step=1, min_value=2, max_value=len(df), value=features_params['k_max'])
-    # requests.put("http://127.0.0.1:8000/k_max", json={'name': 'k_max', 'value': st.session_state.k_max})
+    st.session_state.k_max = st.number_input('Kmax', step=1, min_value=2, max_value=len(df), value=50)
 with k_max_columns[2]:
     if st.button('Reset'):
         for key in st.session_state.keys():
             del st.session_state[key]
         st.rerun()
 
-for feature in features.values():
-    if st.button(f'Get {feature.feature_name}'):
-        feature_json = requests.get(f"http://127.0.0.1:8000/{feature.feature_name}").json()
-        st.write(feature_json)
+# st.write(st.session_state)
 
 for i, feature in enumerate(features.values()):
-    st.session_state.filtered_df[i], st.session_state.k[i] = feature.show_feature(st.session_state.filtered_df[i - 1] if i > 0 else df,
-                                                                                  st.session_state.k[i], st.session_state.k_max)
-    # feature_json = requests.get(f"http://127.0.0.1:8000/{feature.feature_name}").json()
-    # st.write(feature_json)
+    st.session_state.filtered_df[i], st.session_state.k[i] = feature.show_feature(st.session_state.filtered_df[i - 1] if i > 0 else df, st.session_state.k[i], st.session_state.k_max)

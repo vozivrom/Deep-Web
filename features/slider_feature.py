@@ -9,19 +9,16 @@ class SliderFeature(Feature):
 
         feature_name = str(self.feature_name.replace('_', ' ')).capitalize()
         self.st.markdown(f'<div class="param_header">{feature_name}</div>', unsafe_allow_html=True)
-        min_value = df[self.feature_name].min()
-        max_value = df[self.feature_name].max()
-
-        if min_value == max_value:
-            self.st.write(f'k = {k}')
-            return df, k
+        min_value = DFHandler.get_original_df()[self.feature_name].min()
+        max_value = DFHandler.get_original_df()[self.feature_name].max()
 
         start, end = self.st.slider(
-            label='',
-            min_value=min_value,
-            max_value=max_value,
-            value=self.value,
-            step=0.25 if self.feature_name == 'duration_in_minutes' else 1
+            label=self.feature_name,
+            min_value=0,
+            max_value=round(max_value) + 1 if self.feature_name == 'duration_in_minutes' else max_value,
+            value=self.value if self.value else (round(min_value), round(max_value)),
+            step=1,
+            label_visibility='collapsed'
         )
         filtered_df = df[(df[self.feature_name] >= start) & (df[self.feature_name] <= end)]
         k = len(filtered_df)

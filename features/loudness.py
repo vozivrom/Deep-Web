@@ -10,15 +10,15 @@ class Loudness(Feature):
         self.st.markdown(f'<div class="param_header">{feature_name}</div>', unsafe_allow_html=True)
 
         df_handler = DFHandler(df)
-        original_df = df_handler.get_original_df()
+        original_df = DFHandler.get_original_df()
         sorted_series = original_df[self.feature_name].sort_values()
         chunks = np.array_split(sorted_series, 4)
 
         quiet_normal_threshold = chunks[0].iloc[-1]
         normal_loud_threshold = chunks[2].iloc[-1]
 
-        options = ['Quite', 'Normal', 'Loud']
-        choice = self.st.pills('', options, default=self.value, selection_mode="single")
+        options = ['Quiet', 'Normal', 'Loud']
+        choice = self.st.pills(self.feature_name, options, default=self.value, selection_mode="single", label_visibility='collapsed')
 
         filtered_df, k = df_handler.get_loudness(choice, quiet_normal_threshold, normal_loud_threshold)
 
