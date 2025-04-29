@@ -1,16 +1,11 @@
-# fastapi_backend.py
 import pandas as pd
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-import os
-import json
 
 from app.json_handler import JsonHandler
 
 app = FastAPI()
-json_handler = JsonHandler()
 
 # Mount static files (HTML + JS)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -35,12 +30,12 @@ async def save_feature(request: Request):
         'track_album_name': data.get('track_album_name'),
         'track_name': data.get('track_name')
     }
-    json_handler.save_features_params(features_params)
+    JsonHandler.save_features_params('data/', features_params)
     return {"message": "Feature saved"}
 
 @app.get("/features_params")
 async def get_feature():
-    return json_handler.load_features_params()
+    return JsonHandler.load_features_params('data/')
 
 # Return filtered results
 @app.get("/filtered_data")
@@ -48,10 +43,10 @@ def get_filtered_data():
     df = pd.read_csv("data/spotify_songs.csv")
     df['track_album_release_date'] = pd.to_datetime(df['track_album_release_date'])
 
-    features_params = json_handler.load_features_params()
-    features_info = json_handler.load_features_info()
+    features_params = JsonHandler.load_features_params('data/')
+    features_info = JsonHandler.load_features_info('data/')
 
-    print(features_params)
+    # print(features_params)
 
     if features_params['track_album_release_date']:
         from_date, to_date = features_params['track_album_release_date']
@@ -93,21 +88,3 @@ def get_filtered_data():
     df_json['track_album_release_date'] = df_json['track_album_release_date'].astype(str)
     df_json = df_json.to_dict(orient="records")
     return df_json
-
-
-
-# @app.get("/", response_class=HTMLResponse)
-# def root():
-#     """Serve the frontend HTML"""
-#     with open("static/index.html", "r", encoding="utf-8") as file:
-#         return HTMLResponse(content=file.read())
-#
-# @app.put('/{feature_name}')
-# def save_feature(feature_name: str, df: list[dict]):
-#     json_handler.save_feature(f'{feature_name}.json', df)
-#
-# @app.get('/{feature_name}')
-# def get_feature(feature_name: str):
-#     data = json_handler.load_feature(f'{feature_name}.json')
-#     return data
-

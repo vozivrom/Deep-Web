@@ -1,33 +1,29 @@
-import datetime
-
-import uvicorn
+import json
 import os
 import subprocess
 import threading
+import time
+
 import pandas as pd
 import requests
-import time
-import json
+import uvicorn
 
-from app.json_handler import JsonHandler
 from app.dataframe_handler import DFHandler
+from app.json_handler import JsonHandler
 
+features_combinations = JsonHandler.load_data("data/features_combinations.json")
 
-json_handler = JsonHandler()
-
-features_combinations = json_handler.load_data("features_combinations.json")
-
-k_max = 100
+k_max = 1000
 df_len = DFHandler.get_original_df().shape[0]
 features_params = {
-    'track_album_release_date': None,
-    'playlist_genre': None,
-    'playlist_subgenre': None,
     'track_popularity': None,
+    'track_album_release_date': None,
+    'playlist_subgenre': None,
+    'playlist_genre': None,
     'duration_in_minutes': None,
     'loudness': None,
-    'track_name': None,
     'track_artist': None,
+    'track_name': None,
     'track_album_name': None,
 }
 
@@ -43,11 +39,7 @@ def main():
 
     print(f"Dataset was built in : {end_time - start_time} seconds")
 
-    with open('rebuilt_df.json', 'w') as f:
-        json.dump(rebuilt_df.to_dict(orient='records'), f, indent=4)
-
-    df = pd.read_json('rebuilt_df.json')
-    df.to_csv('rebuilt_df.csv', index=False, sep=',')
+    rebuilt_df.to_csv('rebuilt_db.csv', index=False, sep=',')
 
 def walk_tree(remaining_features: list[str], k: int, filtered_df):
     global rebuilt_df
@@ -89,7 +81,7 @@ def walk_tree(remaining_features: list[str], k: int, filtered_df):
 
             features_params[current_feature] = val
 
-            json_handler.save_features_params(features_params)
+            JsonHandler.save_features_params('data/', features_params)
 
 
             requests.put(
@@ -115,13 +107,17 @@ def run_streamlit():
 
 
 if __name__ == "__main__":
-    # fastapi_thread = threading.Thread(target=run_fastapi, daemon=True)
-    # fastapi_thread.start()
-    #
-    # time.sleep(1)
+    fastapi_thread = threading.Thread(target=run_fastapi, daemon=True)
+    fastapi_thread.start()
 
-    # streamlit_thread = threading.Thread(target=run_streamlit, daemon=True)
-    # streamlit_thread.start()
+    time.sleep(2)
 
+    streamlit_thread = threading.Thread(target=run_streamlit, daemon=True)
+    streamlit_thread.start()
 
-    main()
+    time.sleep(2)
+
+    # main()
+
+    fastapi_thread.join()
+    streamlit_thread.join()

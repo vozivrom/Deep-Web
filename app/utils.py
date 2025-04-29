@@ -1,7 +1,8 @@
+import json
+
+import numpy as np
 import pandas as pd
 from json_handler import JsonHandler
-import numpy as np
-import json
 
 def save_features_info():
     df = pd.read_csv('../data/spotify_songs.csv')
@@ -13,6 +14,12 @@ def save_features_info():
     quiet_normal_threshold = chunks[0].iloc[-1]
     normal_loud_threshold = chunks[2].iloc[-1]
 
+    df_artists = pd.read_csv('../data/spotify_artist_data.csv')
+    df_artists = df_artists['Artist Name']
+
+    with open('../data/words.txt', 'r', encoding='utf-8') as file:
+        dict_words = [line.strip() for line in file]
+
     features_data = {'track_album_release_date': {'min': str(df['track_album_release_date'].min()),
                                                   'max': str(df['track_album_release_date'].max())},
                      'playlist_genre':           df['playlist_genre'].unique().tolist(),
@@ -23,9 +30,9 @@ def save_features_info():
                                                   'max': df['duration_in_minutes'].max().item()},
                      'loudness':                 {'quiet_normal_threshold': quiet_normal_threshold,
                                                   'normal_loud_threshold': normal_loud_threshold},
-                     'track_artist':             df['track_artist'].unique().tolist(),
-                     'track_album_name':         df['track_album_name'].unique().tolist(),
-                     'track_name':               df['track_name'].unique().tolist()}
+                     'track_artist':             df_artists.tolist(),
+                     'track_album_name':         dict_words,
+                     'track_name':               dict_words}
     json_handler = JsonHandler()
     json_handler.save_features_info(features_data)
 
@@ -62,15 +69,17 @@ def get_values(feature: str) -> list:
             min_value = round(min_value)
             slider_combinations = []
             rng = max_value - min_value
-            for i in range(0, rng, 2):
+            for i in range(0, rng, 5):
                 if i == rng - 1:
                     break
 
                 start = i
-                end = i + 2
+                end = i + 5
                 slider_combinations.append((start, end))
 
             return slider_combinations
+
+# save_features_info()
 
 features_combinations = {
     'track_popularity': get_values('track_popularity'),
@@ -79,8 +88,8 @@ features_combinations = {
     'duration_in_minutes': get_values('duration_in_minutes'),
     'playlist_genre': get_values('playlist_genre'),
     'loudness': get_values('loudness'),
-    'track_name': get_values('track_name'),
     'track_artist': get_values('track_artist'),
+    'track_name': get_values('track_name'),
     'track_album_name': get_values('track_album_name')
 }
 
