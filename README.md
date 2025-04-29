@@ -53,4 +53,4 @@ Run in the terminal:
 
 ```bash
 python3 main.py
-``
+```
